@@ -42,12 +42,12 @@
         let questions = [];
         let currentQuestionIndex = 0;
         let correctCount = 0;
-
+    
         document.addEventListener("DOMContentLoaded", function () {
             const questionContainer = document.getElementById("question-container");
             const resultContainer = document.getElementById("result-container");
             const nextButton = document.getElementById("next-button");
-
+    
             // Soruları JSON dosyasından al
             fetch('/static/questions.json')
                 .then(response => response.json())
@@ -55,7 +55,7 @@
                     questions = data;
                     showQuestion();
                 });
-
+    
             // Soruyu göster
             function showQuestion() {
                 if (currentQuestionIndex >= questions.length) {
@@ -63,12 +63,18 @@
                     resultContainer.innerHTML = `
                         <h1>Quiz Completed!</h1>
                         <p>You answered ${correctCount} out of ${questions.length} questions correctly.</p>
-                        <a href="/">Try Again</a>
+                        <button id="try-again-button">Try Again</button>
                     `;
                     questionContainer.style.display = 'none';
+    
+                    // Try Again butonuna olay ekle
+                    document.getElementById("try-again-button").addEventListener("click", function () {
+                        resetQuiz();
+                    });
+    
                     return;
                 }
-
+    
                 const question = questions[currentQuestionIndex];
                 document.getElementById("question").textContent = `Question ${currentQuestionIndex + 1}/${questions.length}: ${question.question}`;
                 const choicesContainer = document.getElementById("choices");
@@ -82,7 +88,7 @@
                     `;
                 });
             }
-
+    
             // "Next" butonuna tıklandığında
             nextButton.addEventListener("click", function () {
                 const selectedChoice = document.querySelector('input[name="choice"]:checked');
@@ -90,17 +96,26 @@
                     alert("Please select an answer!");
                     return;
                 }
-
+    
                 const currentQuestion = questions[currentQuestionIndex];
                 if (selectedChoice.value === currentQuestion.answer) {
                     correctCount++;
                 }
-
+    
                 currentQuestionIndex++;
                 showQuestion();
             });
+    
+            // Quiz'i sıfırla
+            function resetQuiz() {
+                currentQuestionIndex = 0;
+                correctCount = 0;
+                questionContainer.style.display = 'block';
+                resultContainer.innerHTML = '';
+                showQuestion();
+            }
         });
-    </script>
+    </script>    
 </head>
 <body>
     <div id="question-container">
