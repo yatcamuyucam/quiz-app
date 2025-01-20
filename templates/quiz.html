@@ -4,18 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #question-container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        #next-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #next-button:hover {
+            background-color: #45a049;
+        }
+
+        #choices {
+            text-align: left;
+        }
+
+        div {
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const questionContainer = document.getElementById("question-container");
+            const resultContainer = document.getElementById("result-container");
+            const nextButton = document.getElementById("next-button");
+
+            // İlk soruyu yükle
+            fetch('/get-question')
+                .then(response => response.json())
+                .then(data => updateQuestion(data));
+
+            // Soruyu güncelle
+            function updateQuestion(data) {
+                if (data.completed) {
+                    resultContainer.innerHTML = `
+                        <h1>Quiz Completed!</h1>
+                        <p>You answered ${data.correct_count} out of ${data.total} questions correctly.</p>
+                        <a href="/">Try Again</a>
+                    `;
+                    questionContainer.style.display = 'none';
+                    return;
+                }
+
+                document.getElementById("question").textContent = `Question ${data.index}/${data.total}: ${data.question}`;
+                const choicesContainer = document.getElementById("choices");
+                choicesContainer.innerHTML = '';
+                data.choices.forEach((choice, index) => {
+                    choicesContainer.innerHTML += `
+                        <div>
+                            <input type="radio" name="choice" value="${choice[0]}" id="choice${index}">
+                            <label for="choice${index}">${choice}</label>
+                        </div>
+                    `;
+                });
+            }
+
+            // "Next" butonuna tıklandığında
+            nextButton.addEventListener("click", function () {
+                const selectedChoice = document.querySelector('input[name="choice"]:checked');
+                if (!selectedChoice) {
+                    alert("Please select an answer!");
+                    return;
+                }
+
+                fetch('/get-question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ choice: selectedChoice.value })
+                })
+                    .then(response => response.json())
+                    .then(data => updateQuestion(data));
+            });
+        });
+    </script>
 </head>
 <body>
-    <h1>Question {{ index }}/{{ total }}</h1>
-    <p>{{ question['question'] }}</p>
-    <form method="post">
-        {% for choice in question['choices'] %}
-        <div>
-            <input type="radio" name="choice" value="{{ choice[0] }}" id="choice{{ loop.index }}">
-            <label for="choice{{ loop.index }}">{{ choice }}</label>
-        </div>
-        {% endfor %}
-        <button type="submit">Submit</button>
-    </form>
+    <div id="question-container">
+        <h1 id="question"></h1>
+        <div id="choices"></div>
+        <button id="next-button">Next</button>
+    </div>
+    <div id="result-container"></div>
 </body>
 </html>

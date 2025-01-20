@@ -1,6 +1,6 @@
 import os
 import random
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
 # Sorular listesi
@@ -533,30 +533,31 @@ def home():
     global current_question_index, correct_count
     current_question_index = 0
     correct_count = 0
-    return redirect(url_for('quiz'))
+    return render_template('quiz.html')
 
-@app.route('/quiz', methods=['GET', 'POST'])
-def quiz():
-    """Soruları görüntüleme ve cevap kontrolü"""
+@app.route('/get-question', methods=['GET', 'POST'])
+def get_question():
+    """Soruyu getirir ve kontrol eder"""
     global current_question_index, correct_count
 
     if request.method == 'POST':
-        user_answer = request.form.get('choice')
+        user_answer = request.json.get('choice')
         correct_answer = questions[current_question_index]['answer']
         if user_answer == correct_answer:
             correct_count += 1
         current_question_index += 1
 
-        if current_question_index >= len(questions):
-            return redirect(url_for('result'))
+    if current_question_index >= len(questions):
+        return jsonify({'completed': True, 'correct_count': correct_count, 'total': len(questions)})
 
     question = questions[current_question_index]
-    return render_template('quiz.html', question=question, index=current_question_index + 1, total=len(questions))
-
-@app.route('/result')
-def result():
-    """Sonuçları gösterir"""
-    return render_template('result.html', correct_count=correct_count, total=len(questions))
+    return jsonify({
+        'completed': False,
+        'question': question['question'],
+        'choices': question['choices'],
+        'index': current_question_index + 1,
+        'total': len(questions)
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Render platformu için uygun portu kullan
