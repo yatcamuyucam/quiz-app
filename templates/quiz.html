@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+</head>
+<body>
+    <h1>Question {{ index }}/{{ total }}</h1>
+    <p>{{ question['question'] }}</p>
+    <form method="post">
+        {% for choice in question['choices'] %}
+        <div>
+            <input type="radio" name="choice" value="{{ choice[0] }}" id="choice{{ loop.index }}">
+            <label for="choice{{ loop.index }}">{{ choice }}</label>
+        </div>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
