@@ -39,32 +39,41 @@
         }
     </style>
     <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let correctCount = 0;
+
         document.addEventListener("DOMContentLoaded", function () {
             const questionContainer = document.getElementById("question-container");
             const resultContainer = document.getElementById("result-container");
             const nextButton = document.getElementById("next-button");
 
-            // İlk soruyu yükle
-            fetch('/get-question')
+            // Soruları JSON dosyasından al
+            fetch('/static/questions.json')
                 .then(response => response.json())
-                .then(data => updateQuestion(data));
+                .then(data => {
+                    questions = data;
+                    showQuestion();
+                });
 
-            // Soruyu güncelle
-            function updateQuestion(data) {
-                if (data.completed) {
+            // Soruyu göster
+            function showQuestion() {
+                if (currentQuestionIndex >= questions.length) {
+                    // Quiz tamamlandı
                     resultContainer.innerHTML = `
                         <h1>Quiz Completed!</h1>
-                        <p>You answered ${data.correct_count} out of ${data.total} questions correctly.</p>
+                        <p>You answered ${correctCount} out of ${questions.length} questions correctly.</p>
                         <a href="/">Try Again</a>
                     `;
                     questionContainer.style.display = 'none';
                     return;
                 }
 
-                document.getElementById("question").textContent = `Question ${data.index}/${data.total}: ${data.question}`;
+                const question = questions[currentQuestionIndex];
+                document.getElementById("question").textContent = `Question ${currentQuestionIndex + 1}/${questions.length}: ${question.question}`;
                 const choicesContainer = document.getElementById("choices");
                 choicesContainer.innerHTML = '';
-                data.choices.forEach((choice, index) => {
+                question.choices.forEach((choice, index) => {
                     choicesContainer.innerHTML += `
                         <div>
                             <input type="radio" name="choice" value="${choice[0]}" id="choice${index}">
@@ -82,15 +91,13 @@
                     return;
                 }
 
-                fetch('/get-question', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ choice: selectedChoice.value })
-                })
-                    .then(response => response.json())
-                    .then(data => updateQuestion(data));
+                const currentQuestion = questions[currentQuestionIndex];
+                if (selectedChoice.value === currentQuestion.answer) {
+                    correctCount++;
+                }
+
+                currentQuestionIndex++;
+                showQuestion();
             });
         });
     </script>
