@@ -37,17 +37,79 @@
         div {
             margin-bottom: 10px;
         }
+
+        /* Toast CSS */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 10px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            font-size: 17px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.3s, fadeout 0.3s 1s;
+        }
+
+        @keyframes fadein {
+            from {
+                bottom: 20px;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: 20px;
+                opacity: 0;
+            }
+        }
     </style>
     <script>
         let questions = [];
         let currentQuestionIndex = 0;
         let correctCount = 0;
-    
+
         document.addEventListener("DOMContentLoaded", function () {
             const questionContainer = document.getElementById("question-container");
             const resultContainer = document.getElementById("result-container");
             const nextButton = document.getElementById("next-button");
-    
+
+            // Toast mesajı gösterme fonksiyonu
+            function showToast(message, isCorrect) {
+                const toast = document.getElementById("toast");
+                toast.textContent = message;
+
+                // Mesaj rengini belirle
+                toast.style.backgroundColor = isCorrect ? "#4CAF50" : "#f44336";
+
+                // Toast'u göster
+                toast.className = "toast show";
+
+                // 1 saniye sonra toast'u gizle
+                setTimeout(() => {
+                    toast.className = toast.className.replace("show", "");
+                }, 1000);
+            }
+
             // Soruları JSON dosyasından al
             fetch('/static/questions.json')
                 .then(response => response.json())
@@ -55,7 +117,7 @@
                     questions = data;
                     showQuestion();
                 });
-    
+
             // Soruyu göster
             function showQuestion() {
                 if (currentQuestionIndex >= questions.length) {
@@ -66,15 +128,15 @@
                         <button id="try-again-button">Try Again</button>
                     `;
                     questionContainer.style.display = 'none';
-    
+
                     // Try Again butonuna olay ekle
                     document.getElementById("try-again-button").addEventListener("click", function () {
                         resetQuiz();
                     });
-    
+
                     return;
                 }
-    
+
                 const question = questions[currentQuestionIndex];
                 document.getElementById("question").textContent = `Question ${currentQuestionIndex + 1}/${questions.length}: ${question.question}`;
                 const choicesContainer = document.getElementById("choices");
@@ -88,7 +150,7 @@
                     `;
                 });
             }
-    
+
             // "Next" butonuna tıklandığında
             nextButton.addEventListener("click", function () {
                 const selectedChoice = document.querySelector('input[name="choice"]:checked');
@@ -96,16 +158,22 @@
                     alert("Please select an answer!");
                     return;
                 }
-    
+
                 const currentQuestion = questions[currentQuestionIndex];
-                if (selectedChoice.value === currentQuestion.answer) {
+                const isCorrect = selectedChoice.value === currentQuestion.answer;
+
+                // Toast mesajı göster
+                if (isCorrect) {
+                    showToast(`Correct! The answer is: ${currentQuestion.answer}`, true);
                     correctCount++;
+                } else {
+                    showToast(`Wrong! The correct answer is: ${currentQuestion.answer}`, false);
                 }
-    
+
                 currentQuestionIndex++;
                 showQuestion();
             });
-    
+
             // Quiz'i sıfırla
             function resetQuiz() {
                 currentQuestionIndex = 0;
@@ -115,7 +183,7 @@
                 showQuestion();
             }
         });
-    </script>    
+    </script>
 </head>
 <body>
     <div id="question-container">
@@ -124,5 +192,6 @@
         <button id="next-button">Next</button>
     </div>
     <div id="result-container"></div>
+    <div id="toast" class="toast"></div> <!-- Toast mesajı için eklendi -->
 </body>
 </html>
